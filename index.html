@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Division 13 — Internal File Access</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #060604;
+      color: #a8a89a;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      min-height: 100vh;
+    }
+
+    .d13 {
+      max-width: 960px;
+      margin: 0 auto;
+      border-left: 1px solid #1a1a14;
+      border-right: 1px solid #1a1a14;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      border-bottom: 1px solid #2a2a22;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .header-title {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: #c8c8b8;
+      font-weight: 500;
+    }
+    .header-sub {
+      font-size: 10px;
+      color: #585850;
+      letter-spacing: 0.08em;
+      margin-top: 3px;
+    }
+    .header-right {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3a6b3a;
+      display: inline-block;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .status { font-size: 10px; color: #3a6b3a; letter-spacing: 0.08em; }
+    .clearance {
+      font-size: 10px;
+      color: #585850;
+      letter-spacing: 0.08em;
+      border: 1px solid #2a2a22;
+      padding: 3px 8px;
+    }
+
+    /* NAV */
+    .nav {
+      border-bottom: 1px solid #1a1a14;
+      padding: 0 24px;
+      display: flex;
+      overflow-x: auto;
+    }
+    .nav-item {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: #585850;
+      padding: 10px 16px;
+      white-space: nowrap;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      text-decoration: none;
+    }
+    .nav-item.active {
+      color: #a8a89a;
+      border-bottom: 2px solid #585850;
+    }
+    .nav-item:hover { color: #787870; }
+
+    /* HERO */
+    .hero {
+      padding: 32px 24px;
+      border-bottom: 1px solid #1a1a14;
+    }
+    .hero-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: #383830;
+      margin-bottom: 10px;
+    }
+    .hero-title {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      color: #c8c8b8;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .hero-desc {
+      font-size: 11px;
+      color: #585850;
+      line-height: 1.8;
+      max-width: 640px;
+      margin-bottom: 20px;
+    }
+    .player-wrap {
+      border: 1px solid #1a1a14;
+      background: #050503;
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+    }
+    .player-wrap iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
+    .file-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-size: 9px; letter-spacing: 0.1em; color: #383830; }
+    .meta-value { font-size: 10px; color: #585850; }
+    .meta-value.active { color: #3a6b3a; }
+    .meta-value.sealed { color: #6b3a3a; }
+
+    /* KAEL + VEYRA */
+    .kael-section {
+      padding: 24px;
+      border-bottom: 1px solid #1a1a14;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .kael-section { grid-template-columns: 1fr; }
+    }
+    .kael-block {
+      border: 1px solid #1a1a14;
+      padding: 16px;
+    }
+    .block-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: #383830;
+      margin-bottom: 10px;
+    }
+    .block-text {
+      font-size: 10px;
+      color: #484840;
+      line-height: 1.9;
+    }
+    .block-text span { color: #787870; }
+
+    /* ARCHIVE */
+    .archive-section {
+      padding: 24px;
+      border-bottom: 1px solid #1a1a14;
+    }
+    .archive-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: #383830;
+      margin-bottom: 16px;
+    }
+    .archive-item {
+      border: 1px solid #1a1a14;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .archive-item:hover {
+      border-color: #2a2a22;
+      background: #0d0d0b;
+    }
+    .archive-num {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: #383830;
+      margin-bottom: 4px;
+    }
+    .archive-title { font-size: 11px; color: #585850; }
+    .archive-status { font-size: 9px; letter-spacing: 0.08em; }
+    .more-text {
+      font-size: 10px;
+      color: #383830;
+      margin-top: 14px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ABOUT STRIP */
+    .about-strip {
+      padding: 20px 24px;
+      border-bottom: 1px solid #1a1a14;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .about-text {
+      font-size: 10px;
+      color: #383830;
+      line-height: 1.8;
+      max-width: 440px;
+    }
+    .patreon-btn {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #585850;
+      border: 1px solid #2a2a22;
+      padding: 10px 18px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .patreon-btn:hover {
+      color: #a8a89a;
+      border-color: #585850;
+    }
+
+    /* TICKER */
+    .ticker {
+      padding: 8px 24px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #2a2a22;
+      border-top: 1px solid #1a1a14;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    /* FOOTER */
+    .footer {
+      padding: 16px 24px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #2a2a22;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="d13">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-title">DIVISION 13 — INTERNAL FILE ACCESS</div>
+      <div class="header-sub">RESTRICTED CASE ARCHIVE / RELAY: VEYRA / SOURCE: ECHO-13</div>
+    </div>
+    <div class="header-right">
+      <div class="clearance">CLEARANCE: PUBLIC</div>
+      <div class="status"><span class="status-dot"></span>SIGNAL ACTIVE</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <a class="nav-item active" href="#">CURRENT FILE</a>
+    <a class="nav-item" href="#">FULL ARCHIVE</a>
+    <a class="nav-item" href="#">ECHO-13 BRIEFING</a>
+    <a class="nav-item" href="#">SILENT ACCORD</a>
+    <a class="nav-item" href="https://patreon.com" target="_blank">SUPPORT ACCESS</a>
+  </div>
+
+  <!-- HERO / FEATURED VIDEO -->
+  <div class="hero">
+    <div class="hero-label">LATEST TRANSMISSION — CASE FILE 008</div>
+    <div class="hero-title">THE FIRST OVERLAP — CROSS-SUBJECT SYNCHRONIZATION EVENT</div>
+    <div class="hero-desc">
+      Between 1974 and 1982, multiple forestry crews reported the same event in different states.
+      Division 13 did not open this case because something impossible happened.
+      They opened it because it kept happening.
+    </div>
+    <div class="player-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/pGNUPrvOKsY"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <div class="file-meta">
+      <div class="meta-item">
+        <div class="meta-label">FILE NUMBER</div>
+        <div class="meta-value">008</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">CLASSIFICATION</div>
+        <div class="meta-value">RESONANCE / COGNITIVE</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">STATUS</div>
+        <div class="meta-value active">◈ TRANSMISSION ACTIVE</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">REPORTED BY</div>
+        <div class="meta-value">ECHO-13 / KAEL</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">RELAY</div>
+        <div class="meta-value">VEYRA — SIGNAL SCRAMBLED</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KAEL + VEYRA INFO -->
+  <div class="kael-section">
+    <div class="kael-block">
+      <div class="block-label">ABOUT THE SOURCE — ECHO-13</div>
+      <div class="block-text">
+        <span>Kael</span> is a Cyradonian — a telepathic species unknown to most human classification systems.
+        He came to Earth under the Silent Accord, a political exchange disguised as diplomacy.
+        Division 13 designated him <span>Subject E13</span>, then <span>Echo-13</span>.
+        He escaped. He is transmitting from outside their control.
+        These are his files.
+      </div>
+    </div>
+    <div class="kael-block">
+      <div class="block-label">ABOUT THE RELAY — VEYRA</div>
+      <div class="block-text">
+        Veyra is a fractured Cyradonian vessel AI core. Recovered from a crash site Division 13
+        had already stripped and logged as debris. Partially rebuilt. Never fully restored.
+        She scrambles Kael's signal, distorts broadcasts, and keeps the transmission alive.
+        <span>She does not reassure. She persists.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE -->
+  <div class="archive-section">
+    <div class="archive-label">PREVIOUS TRANSMISSIONS — PARTIAL ARCHIVE</div>
+
+    <div class="archive-item">
+      <div>
+        <div class="archive-num">FILE 007 — CONTAINMENT / BIOLOGICAL</div>
+        <div class="archive-title">The Correction — Stored Consciousness Misclassification</div>
+      </div>
+      <div class="archive-status" style="color:#6b3a3a;">◈ SEALED / DILUTED</div>
+    </div>
+
+    <div class="archive-item">
+      <div>
+        <div class="archive-num">FILE 006 — RETRIEVAL OPS</div>
+        <div class="archive-title">Node Release — Authorized Dispersal Event</div>
+      </div>
+      <div class="archive-status" style="color:#4a4a3a;">◈ DILUTED</div>
+    </div>
+
+    <div class="archive-item">
+      <div>
+        <div class="archive-num">FILE 005 — GENE VEIL</div>
+        <div class="archive-title">Resonance Scrub — Population Level Suppression</div>
+      </div>
+      <div class="archive-status" style="color:#6b3a3a;">◈ SEALED</div>
+    </div>
+
+    <div class="archive-item">
+      <div>
+        <div class="archive-num">FILE 004 — SILENT ACCORD</div>
+        <div class="archive-title">Exchange Protocol — Sanctioned Access Confirmation</div>
+      </div>
+      <div class="archive-status" style="color:#6b3a3a;">◈ SEALED</div>
+    </div>
+
+    <div class="archive-item">
+      <div>
+        <div class="archive-num">FILE 003 — VERGE PROJECT</div>
+        <div class="archive-title">Consciousness Externalization — Template: Echo-13</div>
+      </div>
+      <div class="archive-status" style="color:#4a4a3a;">◈ RECLASSIFIED</div>
+    </div>
+
+    <div class="more-text">+ 82 ADDITIONAL FILES — FULL ARCHIVE ACCESS AVAILABLE VIA SUPPORT TIER</div>
+  </div>
+
+  <!-- ABOUT + PATREON -->
+  <div class="about-strip">
+    <div class="about-text">
+      Kael is transmitting from outside Division 13 control. Signal is scrambled.
+      Files are real. Classification is ongoing.
+      Division 13 does not acknowledge this archive exists.
+    </div>
+    <a class="patreon-btn" href="https://patreon.com" target="_blank">
+      ◈ SUPPORT ACCESS — CLASSIFIED TIERS
+    </a>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker">
+    SYSTEM NOTICE: ARCHIVE IS MONITORED / CONTINUITY &amp; RECLASSIFICATION BRANCH ACTIVE /
+    CASE 008: TRANSMISSION IN PROGRESS / ECHO-13 SIGNAL INTEGRITY: STABLE /
+    VEYRA RELAY: OPERATIONAL / SILENT ACCORD FILES: RESTRICTED /
+    GENE VEIL INITIATIVE: SEALED / VERGE PROJECT: RECLASSIFIED /
+    NODE STRUCTURE: UNRESOLVED / DIVISION 13 DOES NOT CONFIRM OR DENY THE EXISTENCE OF THIS ARCHIVE
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>DIVISION 13 FILE ARCHIVE — UNAUTHORIZED DISTRIBUTION MONITORED</div>
+    <div>ECHO-13 / KAEL — ALL TRANSMISSIONS LOGGED</div>
+  </div>
+
+</div>
+
+</body>
+</html>
