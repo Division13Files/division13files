@@ -267,7 +267,42 @@
   90% { color: #3a6b3a; opacity: 1; }
   91% { color: #6b3a3a; opacity: 0.8; }
 }
-    
+    <style>
+  /* all your existing CSS */
+
+  .footer {
+    padding: 16px 24px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #383830;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* 👇 ADD THIS HERE */
+
+  .veyra-notice {
+    position: fixed;
+    bottom: 14px;
+    right: 18px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: #3a6b3a;
+    background: rgba(6, 6, 4, 0.85);
+    border: 1px solid #1a1a14;
+    padding: 8px 10px;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .notice-flash {
+    opacity: 1;
+    color: #8e8e86;
+  }
+
+</style>
   </style>
 </head>
 <body>
@@ -431,6 +466,28 @@
   </div>
 
 </div>
+<div class="veyra-notice" id="veyraNotice">VEYRA: RELAY STABLE</div>
 
+<script>
+  const notices = [
+    "VEYRA: RELAY STABLE",
+    "VEYRA: ARCHIVE DRIFT DETECTED",
+    "VEYRA: CIVILIAN ACCESS TOLERATED",
+    "VEYRA: SIGNAL SCRAMBLED",
+    "VEYRA: CLASSIFICATION ONGOING",
+    "VEYRA: CONTINUITY BRANCH WATCHING"
+  ];
+
+  const notice = document.getElementById("veyraNotice");
+
+  setInterval(() => {
+    notice.textContent = notices[Math.floor(Math.random() * notices.length)];
+    notice.classList.add("notice-flash");
+
+    setTimeout(() => {
+      notice.classList.remove("notice-flash");
+    }, 600);
+  }, 7000);
+</script>
 </body>
 </html>
