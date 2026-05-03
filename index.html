@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Division 13 - Internal File Access</title>
   <style>
+.glitch-flicker {
+  animation: glitchFlicker 3.8s infinite;
+}
+
+@keyframes glitchFlicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.35; }
+  94% { opacity: 1; }
+  96% { opacity: 0.15; }
+  97% { opacity: 1; }
+}
+
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -241,7 +254,7 @@
   <div class="header">
     <div>
       <div class="header-title">DIVISION 13 - INTERNAL FILE ACCESS</div>
-      <div class="header-sub">RESTRICTED CASE ARCHIVE / RELAY: VEYRA / SOURCE: ECHO-13</div>
+      <div class="header-sub">RES<span class="glitch-flicker">T</span>RICTED CASE ARCHIVE / RELAY: VEYRA / SOURCE: ECHO-13</div>
     </div>
     <div class="header-right">
       <div class="clearance">CLEARANCE: PUBLIC</div>
