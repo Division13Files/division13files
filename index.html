@@ -256,7 +256,17 @@
   99% { transform: translateX(-0.5px); }
 }
 
+.status-corrupt {
+  color: #6b3a3a;
+  animation: corruptPulse 5s infinite;
+}
 
+@keyframes corruptPulse {
+  0%, 88%, 100% { color: #6b3a3a; opacity: 1; }
+  89% { color: #9b4a4a; opacity: 0.6; }
+  90% { color: #3a6b3a; opacity: 1; }
+  91% { color: #6b3a3a; opacity: 0.8; }
+}
     
   </style>
 </head>
@@ -312,7 +322,7 @@
       </div>
       <div class="meta-item">
         <div class="meta-label">STATUS</div>
-        <div class="meta-value sealed">◈ SEALED THROUGH FRAGMENTATION</div>
+        <div class="meta-value sealed status-corrupt">◈ SEALED THROUGH FRAGMENTATION</div>
       </div>
       <div class="meta-item">
         <div class="meta-label">REPORTED BY</div>
